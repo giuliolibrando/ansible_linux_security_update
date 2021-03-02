@@ -1,0 +1,61 @@
+---
+- hosts: all
+#  serial: 1
+  gather_facts: true
+  become: yes
+  
+  
+  tasks:
+  
+#RHEL CENTOS RPM
+  - name: RHEL - list security updates
+    yum:
+        list: security
+    register: rhel_result
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat'
+
+  - debug:
+      var: rhel_result
+     # verbosity: 1
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat'
+
+
+  - name: RHEL - install security updates
+    yum:
+        name: '*'
+        security: yes
+        state: latest
+    become: true
+    become_user: root
+    become_method: sudo
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'RedHat'
+
+#UBUNTU DEB
+  - name: DEB - Make a copy of security repos
+    shell: cat /etc/apt/sources.list|grep secu >/etc/apt/security.sources.list
+    become: true
+    become_user: root
+    become_method: sudo
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+    
+    
+  - name: DEB - update apt list
+    apt:
+      update_cache: yes
+    become: true
+    become_user: root
+    become_method: sudo
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: DEB - Install security updates
+    shell: apt-get upgrade -oDir::Etc::SourceList=/etc/apt/security.sources.list --force-yes -y
+    become: true
+    become_user: root
+    become_method: sudo
+    register: deb_result
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+    
+  - debug:
+      var: deb_result
+     # verbosity: 1
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
